@@ -112,7 +112,9 @@ h1{font-size:30px;line-height:1.1;font-weight:800;letter-spacing:-.02em;margin:4
 .vbtn svg{width:22px;height:22px}
 .vimg{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:auto;touch-action:pan-x pan-y pinch-zoom}
 .vimg img{max-width:100%;max-height:100%;object-fit:contain}
-.vmeta{flex:1;text-align:center;font-size:14px;color:#B9C2D3}
+.vmeta{flex:1;text-align:center;font-size:14px;color:#B9C2D3;display:flex;flex-direction:column;align-items:center;gap:6px}
+.vcevap{font-weight:700;font-size:15px;color:#fff;padding:7px 14px;border-radius:999px;border:1.5px solid rgba(255,255,255,.35)}
+.vcevap.acik{background:#fff;color:#05080F;border-color:#fff}
 .vtag{font-weight:700;padding:8px 14px;border-radius:999px}
 .vtag.y{background:#D7263D}
 .vtag.b{background:#5A6478}
@@ -124,6 +126,33 @@ h1{font-size:30px;line-height:1.1;font-weight:800;letter-spacing:-.02em;margin:4
 .sheet input{width:100%;font:inherit;font-size:17px;padding:14px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink)}
 .sheet .acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
 .sheet .acts button{min-height:50px;border-radius:14px;font-weight:700}
+.sheet .onizleme{display:block;max-width:100%;max-height:32vh;margin:0 auto 14px;border-radius:10px;border:1px solid var(--line)}
+.sheet .not{color:var(--muted);font-size:14px;margin:-6px 0 12px}
+.siklar{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.siklar button{min-height:58px;border-radius:14px;border:2px solid var(--line);font-weight:800;font-size:22px}
+.siklar button:active,.siklar button.sec{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.duzen{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.duzen button{border:2px solid var(--line);border-radius:14px;padding:10px 0 8px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:6px}
+.duzen button.sec{border-color:var(--ink);background:var(--press)}
+.duzen i{display:grid;gap:3px;width:30px;height:40px;padding:3px;border:1.5px solid var(--muted);border-radius:3px}
+.duzen i b{background:var(--muted);border-radius:1px;opacity:.55}
+.kutu{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:15px}
+.kutu input{width:22px;height:22px;accent-color:var(--ink)}
+.sheet .tam{width:100%;min-height:52px;border-radius:14px;font-weight:700;margin-top:14px;background:var(--ink);color:var(--paper)}
+.sheet .gec{width:100%;min-height:44px;margin-top:8px;color:var(--muted);font-weight:500}
+.yedek{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.imza{text-align:center;margin-top:34px;color:var(--muted);font-size:13px;line-height:1.5}
+.imza b{display:block;color:var(--ink);font-size:15px;font-weight:700}
+.imza button{margin-top:10px;font-size:13px;color:var(--muted);text-decoration:underline;padding:6px}
+.hosgeldin{min-height:calc(100vh - 32px);display:flex;flex-direction:column;justify-content:center;padding:24px 4px}
+.hosgeldin .logo{font-size:56px;line-height:1}
+.hosgeldin h1{font-size:36px;margin-top:16px}
+.hosgeldin p{color:var(--muted);margin:10px 0 26px;font-size:17px}
+.hosgeldin input{width:100%;font:inherit;font-size:20px;padding:16px;border-radius:14px;border:2px solid var(--line);background:var(--paper);color:var(--ink)}
+.hosgeldin input:focus{border-color:var(--ink);outline:none}
+.hosgeldin .basla{width:100%;min-height:56px;margin-top:12px;border-radius:14px;background:var(--ink);color:var(--paper);font-weight:700;font-size:18px}
+.hosgeldin .imza{margin-top:40px}
+.yedek button{min-height:48px;border-radius:14px;background:var(--paper);border:1px solid var(--line);font-weight:500;font-size:15px}
 .sheet .ok{background:var(--ink);color:var(--paper)}
 .sheet .no{border:1.5px solid var(--line)}
 
@@ -136,6 +165,7 @@ h1{font-size:30px;line-height:1.1;font-weight:800;letter-spacing:-.02em;margin:4
 <body>
 <div id="app" class="wrap"></div>
 <input id="picker" type="file" accept="image/*" multiple hidden>
+<input id="yedekPicker" type="file" accept=".json,application/json,text/plain" hidden>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -175,7 +205,22 @@ const DERS = {};
 for (const sinav of ["TYT","AYT"]) for (const d of DERSLER[sinav]) DERS[d.id] = Object.assign({ sinav }, d);
 
 /* ---------- Depolama ---------- */
-let db = null, fotolar = [], ekKonular = {}, depolamaHata = false;
+let db = null, fotolar = [], ekKonular = {}, depolamaHata = false, isim = "";
+try { isim = localStorage.getItem("isim") || ""; } catch(e){}
+const IMZA_UNVAN = "Psikolojik Danışman", IMZA_AD = "Mustafa Değer";
+function iyelik(ad){
+  const s = ad.trim(), l = s.toLocaleLowerCase("tr"), sesli = "aeıioöuü";
+  let son = ""; for (const ch of l) if (sesli.includes(ch)) son = ch;
+  const ek = { a:"ın", ı:"ın", e:"in", i:"in", o:"un", u:"un", ö:"ün", ü:"ün" }[son] || "in";
+  return s + "'" + (sesli.includes(l[l.length-1]) ? "n" : "") + ek;
+}
+const defterAdi = () => isim ? `${iyelik(isim)} Yanlış Defteri` : "Yanlış Defteri";
+async function isimKaydet(ad){
+  isim = ad.trim();
+  try { localStorage.setItem("isim", isim); } catch(e){}
+  if (db) { try { await islem("ayar","readwrite", s => s.put({ k:"isim", v: isim })); } catch(e){} }
+}
+const imzaHtml = (degistir) => `<div class="imza">Bu uygulama öğrencileri için hazırlandı<b>${IMZA_UNVAN} ${IMZA_AD}</b>${degistir ? `<button id="isimDegistir">İsmi değiştir</button>` : ""}</div>`;
 function idbAc(){
   return new Promise((res, rej) => {
     const r = indexedDB.open("yanlis-defteri", 1);
@@ -204,6 +249,8 @@ async function yukle(){
     fotolar = (await islem("fotolar","readonly", s => s.getAll())) || [];
     const a = await islem("ayar","readonly", s => s.get("ekKonular"));
     ekKonular = (a && a.v) || {};
+    const ia = await islem("ayar","readonly", s => s.get("isim"));
+    isim = (ia && ia.v) || "";
     if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
   } catch (e) { depolamaHata = true; }
 }
@@ -246,6 +293,8 @@ window.addEventListener("popstate", ciz);
 /* ---------- Ekranlar ---------- */
 function ciz(){
   document.querySelectorAll(".viewer,.bar").forEach(n => n.remove());
+  document.title = defterAdi();
+  if (!isim) return hosgeldin();
   const r = rota();
   if (r[0] === "d" && DERS[r[1]]) return dersEkrani(r[1]);
   if (r[0] === "k" && DERS[r[1]] && r[2]) return konuEkrani(r[1], r[2], r[3]);
@@ -253,9 +302,41 @@ function ciz(){
   anaEkran();
 }
 
+function hosgeldin(){
+  $app.innerHTML = `<div class="hosgeldin">
+    <div class="logo" aria-hidden="true">📸</div>
+    <h1>Yanlış Defteri</h1>
+    <p>Yanlış yaptığın ve boş bıraktığın soruları ders ve konuya göre burada toplayacaksın. Önce seni tanıyalım.</p>
+    <input id="ad" maxlength="30" placeholder="Adın ne?" autocomplete="given-name" enterkeyhint="done">
+    <button class="basla" id="basla">Başla</button>
+    ${imzaHtml(false)}
+  </div>`;
+  const inp = document.getElementById("ad");
+  const basla = async () => {
+    const ad = inp.value.trim();
+    if (!ad) { inp.focus(); return; }
+    await isimKaydet(ad);
+    history.replaceState({ d: 0 }, "", "#/"); ciz();
+    toast(`Hoş geldin ${ad}`);
+  };
+  document.getElementById("basla").onclick = basla;
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") basla(); });
+}
+function isimDegistir(){
+  const bg = sayfaAc(`<h2>Adın ne?</h2>
+    <input id="yeniAd" maxlength="30" value="${esc(isim)}" autocomplete="given-name">
+    <div class="acts"><button class="no" id="ino">Vazgeç</button><button class="ok" id="iok">Kaydet</button></div>`);
+  const inp = bg.querySelector("#yeniAd"); setTimeout(() => { inp.focus(); inp.select(); }, 50);
+  bg.onclick = e => { if (e.target === bg) bg.remove(); };
+  bg.querySelector("#ino").onclick = () => bg.remove();
+  const kaydet = async () => { const ad = inp.value.trim(); if (!ad) { inp.focus(); return; } await isimKaydet(ad); bg.remove(); ciz(); };
+  bg.querySelector("#iok").onclick = kaydet;
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") kaydet(); });
+}
+
 function anaEkran(){
   const toplam = say(fotolar);
-  let h = `<header class="top"><h1>Yanlış Defteri</h1>
+  let h = `<header class="top"><h1>${esc(defterAdi())}</h1>
     <div class="sub">${fotolar.length ? `Toplam ${toplam.y} yanlış, ${toplam.b} boş soru` : "Bir ders seç, konuyu bul, sorunun fotoğrafını çek."}</div>
     <div class="seg" role="group" aria-label="Sınav">
       <button data-s="TYT" aria-pressed="${sinav==="TYT"}">TYT</button>
@@ -270,14 +351,19 @@ function anaEkran(){
   h += `</div>`;
   const haftalik = fotolar.filter(f => f.t >= Date.now() - HAFTA);
   h += `<button class="weekbtn" id="hafta" ${haftalik.length ? "" : "disabled"}>${pdfIkon}<span>Son 1 haftanın sorularını PDF yap<small>${haftalik.length ? `${haftalik.length} soru, TYT ve AYT birlikte` : "Son 7 günde eklenen soru yok"}</small></span></button>`;
+  h += `<div class="yedek"><button id="yedekAl">Yedek al</button><button id="yedekYukle">Yedekten yükle</button></div>`;
+  h += imzaHtml(true);
   $app.innerHTML = h;
+  document.getElementById("isimDegistir").onclick = isimDegistir;
+  document.getElementById("yedekAl").onclick = yedekAl;
+  document.getElementById("yedekYukle").onclick = yedekYukle;
   document.getElementById("hafta").onclick = () => {
     const sira = {}; let n = 0;
     for (const sv of ["TYT","AYT"]) for (const d of DERSLER[sv]) konulari(d.id).forEach(k => { sira[d.id + "|" + k] = n++; });
     const l = fotolar.filter(f => f.t >= Date.now() - HAFTA).sort((a,b) => (sira[a.ders+"|"+a.konu] ?? 1e9) - (sira[b.ders+"|"+b.konu] ?? 1e9) || a.t - b.t);
     const bas = new Date(Date.now() - HAFTA).toLocaleDateString("tr-TR", { day:"numeric", month:"long" });
     const son = new Date().toLocaleDateString("tr-TR", { day:"numeric", month:"long" });
-    pdfYap(l, "Son 1 haftanın soruları", `${bas} - ${son}`, true, "son-1-hafta");
+    pdfSecenek((n, anahtar) => pdfYap(l, "Son 1 haftanın soruları", `${bas} - ${son}`, true, "son-1-hafta", n, anahtar));
   };
   $app.querySelectorAll("[data-s]").forEach(b => b.onclick = () => { sinav = b.dataset.s; try{localStorage.setItem("sinav", sinav)}catch(e){} anaEkran(); });
   $app.querySelectorAll("[data-d]").forEach(b => b.onclick = () => git("d", b.dataset.d));
@@ -333,7 +419,7 @@ function konuEkrani(sid, konu){
   if (pb) pb.onclick = () => {
     const l = gorunen.slice().sort((a,b) => a.t - b.t);
     const ne = filtre === "y" ? "yanlış " : filtre === "b" ? "boş " : "";
-    pdfYap(l, `${d.sinav} ${d.ad}: ${konu}`, `${l.length} ${ne}soru`, false, `${d.sinav}-${d.ad}-${konu}`);
+    pdfSecenek((n, anahtar) => pdfYap(l, `${d.sinav} ${d.ad}: ${konu}`, `${l.length} ${ne}soru`, false, `${d.sinav}-${d.ad}-${konu}`, n, anahtar));
   };
   const ks = document.getElementById("konuSil");
   if (ks) ks.onclick = async () => { ekKonular[sid] = (ekKonular[sid]||[]).filter(k => k !== konu); await ekKonuKaydet(); geri("d", sid); };
@@ -365,18 +451,24 @@ function fotoSec(sid, konu, tip){
     const files = Array.from(p.files || []);
     if (!files.length) return;
     const busy = document.createElement("div"); busy.className = "busy"; busy.textContent = "Kaydediliyor…"; document.body.appendChild(busy);
-    let n = 0;
+    let n = 0; const yeni = [];
     try {
       for (const file of files) {
         const blob = await kucult(file);
         const kayit = { id: Date.now().toString(36) + Math.random().toString(36).slice(2,7), ders: sid, konu, tip, blob, t: Date.now() };
         await islem("fotolar","readwrite", s => s.put(kayit));
-        fotolar.push(kayit); n++;
+        fotolar.push(kayit); yeni.push(kayit); n++;
       }
       toast(n > 1 ? `${n} soru eklendi` : (tip === "y" ? "Yanlış soru eklendi" : "Boş soru eklendi"));
     } catch (e) {
       toast(n ? `${n} soru eklendi, kalanlar kaydedilemedi` : "Kaydedilemedi: telefonda yer kalmamış olabilir");
     } finally { busy.remove(); filtre = "hepsi"; konuEkrani(sid, konu); }
+    for (let i = 0; i < yeni.length; i++) {
+      const c = await cevapSor(yeni[i], yeni.length > 1 ? `${i+1} / ${yeni.length}` : "");
+      if (c === undefined) break;
+      if (c) { yeni[i].cevap = c; try { await islem("fotolar","readwrite", s => s.put(yeni[i])); } catch(e){} }
+    }
+    konuEkrani(sid, konu);
   };
   p.click();
 }
@@ -397,7 +489,7 @@ function gorsel(f){
     <div class="vimg" id="vi"><img src="${fotoUrl(f)}" alt="Soru"></div>
     <div class="vbot">
       <button class="vbtn" id="vp" aria-label="Önceki" ${i<=0?"disabled style='opacity:.3'":""}>${geriIkon}</button>
-      <div class="vmeta">${i+1} / ${liste.length}, ${tarih}</div>
+      <div class="vmeta"><span>${i+1} / ${liste.length}, ${tarih}</span><button class="vcevap" id="vc">${f.cevap ? "Cevabı göster" : "Cevap ekle"}</button></div>
       <button class="vbtn" id="vn" aria-label="Sonraki" ${i>=liste.length-1?"disabled style='opacity:.3'":""}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>`;
   document.body.appendChild(v);
@@ -406,6 +498,15 @@ function gorsel(f){
   v.querySelector("#vk").onclick = kapat;
   v.querySelector("#vp").onclick = () => yan(i-1);
   v.querySelector("#vn").onclick = () => yan(i+1);
+  const vc = v.querySelector("#vc");
+  vc.onclick = async () => {
+    if (f.cevap && !vc.classList.contains("acik")) { vc.textContent = `Cevap: ${f.cevap}`; vc.classList.add("acik"); return; }
+    const c = await cevapSor(f, "", true);
+    if (!c) return;
+    f.cevap = c;
+    try { await islem("fotolar","readwrite", s => s.put(f)); } catch(e){}
+    vc.textContent = `Cevap: ${c}`; vc.classList.add("acik");
+  };
   v.querySelector("#vt").onclick = async () => {
     f.tip = f.tip === "y" ? "b" : "y";
     try { await islem("fotolar","readwrite", s => s.put(f)); } catch(e){}
@@ -439,7 +540,8 @@ function resimYukle(src){ return new Promise((res, rej) => { const i = new Image
 function sigdir(ctx, t, maxW){ if (ctx.measureText(t).width <= maxW) return t; while (t.length > 1 && ctx.measureText(t + "…").width > maxW) t = t.slice(0, -1); return t + "…"; }
 function dosyaAdi(t){ return t.toLocaleLowerCase("tr").replace(/ç/g,"c").replace(/ğ/g,"g").replace(/ı/g,"i").replace(/ö/g,"o").replace(/ş/g,"s").replace(/ü/g,"u").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"") || "sorular"; }
 
-async function pdfYap(liste, baslik, altBaslik, konuGoster, ad){
+async function pdfYap(liste, baslik, altBaslik, konuGoster, ad, adet, anahtar){
+  adet = adet || 1;
   if (!liste.length) { toast("PDF yapılacak soru yok"); return; }
   if (!window.jspdf) { toast("PDF aracı yüklenemedi, internet bağlantısını kontrol et"); return; }
   const busy = document.createElement("div"); busy.className = "busy"; busy.textContent = "PDF hazırlanıyor…"; document.body.appendChild(busy);
@@ -451,6 +553,7 @@ async function pdfYap(liste, baslik, altBaslik, konuGoster, ad){
     const bitir = () => {
       ctx.fillStyle = "#8A94A6"; ctx.font = `400 22px ${FONT}`; ctx.textAlign = "right";
       ctx.fillText(String(sayfa), W - M, H - 50); ctx.textAlign = "left";
+      ctx.fillText(`${defterAdi()}  |  ${IMZA_UNVAN} ${IMZA_AD}`, M, H - 50);
       if (sayfa > 1) pdf.addPage();
       pdf.addImage(cv.toDataURL("image/jpeg", 0.85), "JPEG", 0, 0, 210, 297);
     };
@@ -461,6 +564,7 @@ async function pdfYap(liste, baslik, altBaslik, konuGoster, ad){
       sayfa++; y = M;
     };
     yeniSayfa();
+    if (isim) { ctx.fillStyle = "#D7263D"; ctx.font = `700 26px ${FONT}`; ctx.fillText(sigdir(ctx, defterAdi(), W - 2*M), M, y + 22); y += 44; }
     ctx.fillStyle = "#18233D"; ctx.font = `800 46px ${FONT}`;
     ctx.fillText(sigdir(ctx, baslik, W - 2*M), M, y + 40);
     ctx.fillStyle = "#66728C"; ctx.font = `400 26px ${FONT}`;
@@ -468,27 +572,50 @@ async function pdfYap(liste, baslik, altBaslik, konuGoster, ad){
     y += 120;
     ctx.fillStyle = "#D5DCE8"; ctx.fillRect(M, y, W - 2*M, 2); y += 40;
 
-    const icW = W - 2*M, resimMaxW = Math.round(icW * 0.68), resimMaxH = H - 2*M - 140, etiketH = 44;
+    const kolon = adet >= 4 ? 2 : 1, satir = adet === 1 ? 1 : adet === 2 ? 2 : adet === 4 ? 2 : 3;
+    const bosluk = 40, etiketH = 40, altSinir = H - M - 30;
+    let ust = y, sira = 0;
+    const etiketFont = adet >= 4 ? 22 : 26, bilgiFont = adet >= 4 ? 20 : 24;
     for (let i = 0; i < liste.length; i++) {
       const f = liste[i];
       let img; try { img = await resimYukle(fotoUrl(f)); } catch(e) { continue; }
-      const s = Math.min(resimMaxW / img.naturalWidth, resimMaxH / img.naturalHeight, 2);
-      const w = Math.round(img.naturalWidth * s), h = Math.round(img.naturalHeight * s);
-      if (y + etiketH + h > H - M - 40) yeniSayfa();
-      ctx.font = `700 26px ${FONT}`; ctx.fillStyle = "#18233D";
-      const no = `${i+1}.`; ctx.fillText(no, M, y + 28);
-      let x = M + ctx.measureText(no).width + 12;
+      if (sira === adet) { yeniSayfa(); ust = y; sira = 0; }
+      const hucreW = (W - 2*M - bosluk*(kolon-1)) / kolon;
+      const hucreH = (altSinir - ust - bosluk*(satir-1)) / satir;
+      const k = sira % kolon, r = Math.floor(sira / kolon);
+      const x0 = M + k*(hucreW + bosluk), y0 = ust + r*(hucreH + bosluk);
+      ctx.font = `700 ${etiketFont}px ${FONT}`; ctx.fillStyle = "#18233D";
+      const no = `${i+1}.`; ctx.fillText(no, x0, y0 + 28);
+      let x = x0 + ctx.measureText(no).width + 10;
       ctx.fillStyle = f.tip === "y" ? "#D7263D" : "#7C8799";
-      const tip = f.tip === "y" ? "Yanlış" : "Boş"; ctx.fillText(tip, x, y + 28);
-      x += ctx.measureText(tip).width + 16;
-      ctx.font = `400 24px ${FONT}`; ctx.fillStyle = "#66728C";
+      const tip = f.tip === "y" ? "Yanlış" : "Boş"; ctx.fillText(tip, x, y0 + 28);
+      x += ctx.measureText(tip).width + 14;
+      ctx.font = `400 ${bilgiFont}px ${FONT}`; ctx.fillStyle = "#66728C";
       const d = DERS[f.ders];
-      const bilgi = (konuGoster ? `${d.sinav} ${d.ad}, ${f.konu}, ` : "") + new Date(f.t).toLocaleDateString("tr-TR", { day:"numeric", month:"long" });
-      ctx.fillText(sigdir(ctx, bilgi, W - M - x), x, y + 28);
-      y += etiketH;
-      ctx.drawImage(img, M, y, w, h);
-      ctx.strokeStyle = "#D5DCE8"; ctx.lineWidth = 2; ctx.strokeRect(M, y, w, h);
-      y += h + 50;
+      const bilgi = (konuGoster ? `${d.ad}, ${f.konu}, ` : "") + new Date(f.t).toLocaleDateString("tr-TR", { day:"numeric", month:"short" });
+      ctx.fillText(sigdir(ctx, bilgi, x0 + hucreW - x), x, y0 + 28);
+      const maxW = adet === 1 ? hucreW * 0.8 : hucreW, maxH = hucreH - etiketH - 8;
+      const sc = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight, 2);
+      const w = Math.round(img.naturalWidth * sc), h = Math.round(img.naturalHeight * sc);
+      ctx.drawImage(img, x0, y0 + etiketH, w, h);
+      ctx.strokeStyle = "#D5DCE8"; ctx.lineWidth = 2; ctx.strokeRect(x0, y0 + etiketH, w, h);
+      sira++;
+    }
+    if (anahtar && liste.some(f => f.cevap)) {
+      yeniSayfa();
+      ctx.fillStyle = "#18233D"; ctx.font = `800 40px ${FONT}`;
+      ctx.fillText("Cevap Anahtarı", M, y + 36);
+      y += 70; ctx.fillStyle = "#D5DCE8"; ctx.fillRect(M, y, W - 2*M, 2); y += 50;
+      const sut = 5, sw = (W - 2*M) / sut, sh = 58;
+      liste.forEach((f, i) => {
+        const r = Math.floor(i / sut), k = i % sut;
+        let yy = y + r*sh;
+        if (yy > altSinir - 20) return;
+        ctx.font = `400 28px ${FONT}`; ctx.fillStyle = "#66728C";
+        ctx.fillText(`${i+1}.`, M + k*sw, yy);
+        ctx.font = `700 30px ${FONT}`; ctx.fillStyle = f.cevap ? "#18233D" : "#B0B8C6";
+        ctx.fillText(f.cevap || "-", M + k*sw + 62, yy);
+      });
     }
     bitir();
     const blob = pdf.output("blob");
@@ -498,14 +625,15 @@ async function pdfYap(liste, baslik, altBaslik, konuGoster, ad){
   } finally { busy.remove(); }
 }
 
-async function pdfVer(blob, filename){
+function pdfVer(blob, filename){ return dosyaVer(blob, filename, "application/pdf", "PDF"); }
+async function dosyaVer(blob, filename, tur, ad){
   const indir = await indirP;
   if (indir) {
-    try { await indir.save({ filename, data: blob }); toast("PDF kaydedildi"); }
-    catch (e) { if (e && e.code !== "declined") toast("PDF kaydedilemedi"); }
+    try { await indir.save({ filename, data: blob }); toast(`${ad} kaydedildi`); }
+    catch (e) { if (e && e.code !== "declined") toast(`${ad} kaydedilemedi`); }
     return;
   }
-  const file = new File([blob], filename, { type: "application/pdf" });
+  const file = new File([blob], filename, { type: tur });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try { await navigator.share({ files: [file], title: filename }); return; }
     catch (e) { if (e && e.name === "AbortError") return; }
@@ -514,6 +642,108 @@ async function pdfVer(blob, filename){
   a.href = URL.createObjectURL(blob); a.download = filename;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+}
+
+/* ---------- Seçim pencereleri ---------- */
+function sayfaAc(html){
+  const bg = document.createElement("div");
+  bg.className = "sheet-bg";
+  bg.innerHTML = `<div class="sheet" role="dialog">${html}</div>`;
+  document.body.appendChild(bg);
+  return bg;
+}
+function cevapSor(f, ust, degistir){
+  return new Promise(res => {
+    const bg = sayfaAc(`<h2>${degistir ? "Doğru cevap hangisi?" : "Bu sorunun doğru cevabı ne?"}</h2>
+      ${ust ? `<p class="not">${ust}</p>` : ""}
+      <img class="onizleme" src="${fotoUrl(f)}" alt="">
+      <div class="siklar">${["A","B","C","D","E"].map(c => `<button data-c="${c}" class="${f.cevap === c ? "sec" : ""}">${c}</button>`).join("")}</div>
+      <button class="gec" id="gec">${degistir ? "Vazgeç" : "Bilmiyorum, sonra eklerim"}</button>`);
+    const kapat = v => { bg.remove(); res(v); };
+    bg.onclick = e => { if (e.target === bg) kapat(null); };
+    bg.querySelector("#gec").onclick = () => kapat(null);
+    bg.querySelectorAll("[data-c]").forEach(b => b.onclick = () => kapat(b.dataset.c));
+  });
+}
+function pdfSecenek(devam){
+  let adet = 2, anahtar = true;
+  try { adet = +localStorage.getItem("pdfAdet") || 2; anahtar = localStorage.getItem("pdfAnahtar") !== "0"; } catch(e){}
+  const sekil = (n, k, r) => `<i style="grid-template-columns:repeat(${k},1fr);grid-template-rows:repeat(${r},1fr)">${"<b></b>".repeat(n)}</i>`;
+  const bg = sayfaAc(`<h2>Bir sayfada kaç soru olsun?</h2>
+    <div class="duzen">
+      <button data-n="1">${sekil(1,1,1)}1</button>
+      <button data-n="2">${sekil(2,1,2)}2</button>
+      <button data-n="4">${sekil(4,2,2)}4</button>
+      <button data-n="6">${sekil(6,2,3)}6</button>
+    </div>
+    <label class="kutu"><input type="checkbox" id="anahtar" ${anahtar ? "checked" : ""}>Cevap anahtarını son sayfaya ekle</label>
+    <button class="tam" id="yap">PDF yap</button>
+    <button class="gec" id="vaz">Vazgeç</button>`);
+  const isaretle = () => bg.querySelectorAll("[data-n]").forEach(b => b.classList.toggle("sec", +b.dataset.n === adet));
+  isaretle();
+  bg.querySelectorAll("[data-n]").forEach(b => b.onclick = () => { adet = +b.dataset.n; isaretle(); });
+  bg.onclick = e => { if (e.target === bg) bg.remove(); };
+  bg.querySelector("#vaz").onclick = () => bg.remove();
+  bg.querySelector("#yap").onclick = () => {
+    anahtar = bg.querySelector("#anahtar").checked;
+    try { localStorage.setItem("pdfAdet", adet); localStorage.setItem("pdfAnahtar", anahtar ? "1" : "0"); } catch(e){}
+    bg.remove(); devam(adet, anahtar);
+  };
+}
+
+/* ---------- Yedek ---------- */
+function blobDataUrl(b){ return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); }); }
+function dataUrlBlob(u){
+  const [bas, veri] = u.split(",");
+  const tur = (bas.match(/data:([^;]+)/) || [])[1] || "image/jpeg";
+  const bin = atob(veri), arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: tur });
+}
+async function yedekAl(){
+  if (!fotolar.length) { toast("Yedeklenecek soru yok"); return; }
+  const busy = document.createElement("div"); busy.className = "busy"; busy.textContent = "Yedek hazırlanıyor…"; document.body.appendChild(busy);
+  try {
+    const liste = [];
+    for (const f of fotolar) liste.push({ id: f.id, ders: f.ders, konu: f.konu, tip: f.tip, t: f.t, cevap: f.cevap || null, img: await blobDataUrl(f.blob) });
+    const json = JSON.stringify({ uygulama: "yanlis-defteri", surum: 1, tarih: Date.now(), ekKonular, fotolar: liste });
+    const g = new Date(), tarih = `${g.getFullYear()}-${String(g.getMonth()+1).padStart(2,"0")}-${String(g.getDate()).padStart(2,"0")}`;
+    busy.remove();
+    await dosyaVer(new Blob([json], { type: "application/json" }), `yanlis-defteri-yedek-${tarih}.json`, "application/json", "Yedek");
+  } catch (e) { toast("Yedek alınamadı"); }
+  finally { busy.remove(); }
+}
+function yedekYukle(){
+  if (!db) { toast("Bu tarayıcıda kayıt yapılamıyor"); return; }
+  const p = document.getElementById("yedekPicker");
+  p.value = "";
+  p.onchange = async () => {
+    const file = p.files && p.files[0];
+    if (!file) return;
+    const busy = document.createElement("div"); busy.className = "busy"; busy.textContent = "Yedek yükleniyor…"; document.body.appendChild(busy);
+    let eklenen = 0, atlanan = 0;
+    try {
+      const veri = JSON.parse(await file.text());
+      if (!veri || veri.uygulama !== "yanlis-defteri" || !Array.isArray(veri.fotolar)) throw new Error("bicim");
+      const varOlan = new Set(fotolar.map(f => f.id));
+      for (const x of veri.fotolar) {
+        if (varOlan.has(x.id) || !DERS[x.ders] || !x.img) { atlanan++; continue; }
+        const kayit = { id: x.id, ders: x.ders, konu: x.konu, tip: x.tip === "b" ? "b" : "y", t: x.t || Date.now(), blob: dataUrlBlob(x.img) };
+        if (x.cevap) kayit.cevap = x.cevap;
+        await islem("fotolar","readwrite", s => s.put(kayit));
+        fotolar.push(kayit); eklenen++;
+      }
+      for (const [sid, list] of Object.entries(veri.ekKonular || {})) {
+        if (!DERS[sid] || !Array.isArray(list)) continue;
+        for (const k of list) if (!konulari(sid).includes(k)) ekKonular[sid] = (ekKonular[sid] || []).concat(k);
+      }
+      await ekKonuKaydet();
+      toast(eklenen ? `${eklenen} soru geri yüklendi` + (atlanan ? `, ${atlanan} tanesi zaten vardı` : "") : "Yedekteki sorular zaten telefonda var");
+    } catch (e) {
+      toast(e && e.message === "bicim" ? "Bu dosya bir Yanlış Defteri yedeği değil" : (eklenen ? `${eklenen} soru yüklendi, kalanlar yüklenemedi` : "Yedek yüklenemedi"));
+    } finally { busy.remove(); ciz(); }
+  };
+  p.click();
 }
 
 /* ---------- Konu ekleme ---------- */
