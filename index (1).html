@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#E9EEF5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1626" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Yanlış Defteri</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E9EEF5; --grid:#DCE3EE; --paper:#FFFFFF; --ink:#18233D; --muted:#66728C;
+  --line:#D5DCE8; --red:#D7263D; --red-soft:#FBE3E6; --pencil:#7C8799; --pencil-soft:#E6EAF1;
+  --press:#F2F5FA;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1626; --grid:#16203A; --paper:#182238; --ink:#E6ECF5; --muted:#93A0B8;
+    --line:#2A3754; --red:#FF5A6E; --red-soft:#3A1E2A; --pencil:#A3AEC2; --pencil-soft:#25304A;
+    --press:#1F2B46; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1626; --grid:#16203A; --paper:#182238; --ink:#E6ECF5; --muted:#93A0B8;
+  --line:#2A3754; --red:#FF5A6E; --red-soft:#3A1E2A; --pencil:#A3AEC2; --pencil-soft:#25304A;
+  --press:#1F2B46; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{margin:0;min-height:100%}
+body{
+  background-color:var(--bg);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:22px 22px;
+  color:var(--ink);
+  font-family:"Rubik",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:16px; line-height:1.4;
+  -webkit-tap-highlight-color:transparent;
+}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.wrap{max-width:520px;margin:0 auto;padding:16px 16px 140px}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;margin:0 -16px;padding:10px 16px 12px;background:var(--bg)}
+.back{display:inline-flex;align-items:center;gap:4px;color:var(--muted);font-weight:500;padding:6px 8px 6px 0;min-height:40px}
+.back svg{width:20px;height:20px}
+h1{font-size:30px;line-height:1.1;font-weight:800;letter-spacing:-.02em;margin:4px 0 0}
+.sub{color:var(--muted);margin-top:6px;font-size:15px}
+
+/* exam switch */
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:4px;margin-top:16px}
+.seg button{padding:10px 0;border-radius:10px;font-weight:700;font-size:17px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+
+/* lists */
+.list{margin-top:14px;background:var(--paper);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:15px 16px;min-height:56px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row:active{background:var(--press)}
+.row .name{flex:1;font-weight:500}
+.row.empty .name{color:var(--muted);font-weight:400}
+.row .chev{color:var(--line);width:18px;height:18px;flex:none}
+.counts{display:flex;gap:6px;flex:none}
+.c{display:inline-flex;align-items:center;gap:5px;font-weight:700;font-size:14px;padding:3px 9px;border-radius:999px}
+.c.y{background:var(--red-soft);color:var(--red)}
+.c.b{background:var(--pencil-soft);color:var(--pencil)}
+.add-topic{color:var(--muted);font-weight:500}
+.add-topic .plus{width:22px;height:22px;border-radius:50%;border:1.5px dashed var(--muted);display:grid;place-items:center;font-size:16px;line-height:1}
+
+/* grid */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.th{position:relative;aspect-ratio:3/4;border-radius:12px;overflow:hidden;background:var(--paper);border:1px solid var(--line)}
+.th img{width:100%;height:100%;object-fit:cover;display:block}
+.th .tag{position:absolute;left:6px;bottom:6px;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--paper)}
+.th .tag.y{color:var(--red)}
+.th .tag.b{color:var(--pencil)}
+.emptybox{margin-top:18px;background:var(--paper);border:1.5px dashed var(--line);border-radius:16px;padding:28px 20px;text-align:center;color:var(--muted)}
+.emptybox b{display:block;color:var(--ink);font-size:17px;margin-bottom:6px}
+.filters{display:flex;gap:8px;margin-top:14px}
+.filters button{padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--paper);font-weight:500;font-size:14px;color:var(--muted)}
+.filters button[aria-pressed="true"]{border-color:var(--ink);color:var(--ink)}
+.pdfbtn{position:absolute;right:16px;top:12px;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:12px;background:var(--paper);border:1px solid var(--line);font-weight:700;font-size:15px}
+.pdfbtn svg{width:18px;height:18px}
+.weekbtn{display:flex;align-items:center;gap:12px;width:100%;margin-top:14px;padding:16px;border-radius:16px;background:var(--ink);color:var(--paper);text-align:left;font-weight:700}
+.weekbtn small{display:block;font-weight:400;opacity:.75;font-size:14px;margin-top:2px}
+.weekbtn svg{width:26px;height:26px;flex:none}
+.weekbtn[disabled]{opacity:.45}
+.linkbtn{color:var(--muted);text-decoration:underline;font-size:14px;margin-top:22px;padding:8px 0}
+
+/* bottom bar */
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:10;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,var(--bg) 30%)}
+.bar .in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.big{display:flex;align-items:center;justify-content:center;gap:8px;min-height:58px;border-radius:16px;font-weight:700;font-size:17px}
+.big svg{width:22px;height:22px}
+.big.y{background:var(--red);color:#fff}
+.big.b{background:var(--paper);color:var(--ink);border:2px solid var(--pencil)}
+.big:active{transform:scale(.98)}
+
+/* viewer */
+.viewer{position:fixed;inset:0;z-index:50;background:#05080F;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color:#fff}
+.vtop,.vbot{display:flex;align-items:center;gap:8px;padding:10px 12px}
+.vtop{justify-content:space-between}
+.vbtn{min-height:44px;min-width:44px;padding:0 12px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:500;background:rgba(255,255,255,.08)}
+.vbtn svg{width:22px;height:22px}
+.vimg{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:auto;touch-action:pan-x pan-y pinch-zoom}
+.vimg img{max-width:100%;max-height:100%;object-fit:contain}
+.vmeta{flex:1;text-align:center;font-size:14px;color:#B9C2D3}
+.vtag{font-weight:700;padding:8px 14px;border-radius:999px}
+.vtag.y{background:#D7263D}
+.vtag.b{background:#5A6478}
+
+/* sheet */
+.sheet-bg{position:fixed;inset:0;z-index:60;background:rgba(5,8,15,.5);display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:520px;background:var(--paper);border-radius:20px 20px 0 0;padding:20px 16px calc(16px + env(safe-area-inset-bottom,0px))}
+.sheet h2{margin:0 0 12px;font-size:20px}
+.sheet input{width:100%;font:inherit;font-size:17px;padding:14px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink)}
+.sheet .acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.sheet .acts button{min-height:50px;border-radius:14px;font-weight:700}
+.sheet .ok{background:var(--ink);color:var(--paper)}
+.sheet .no{border:1.5px solid var(--line)}
+
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:70;background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:999px;font-weight:500;font-size:15px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+.busy{position:fixed;inset:0;z-index:80;display:grid;place-items:center;background:rgba(5,8,15,.35);color:#fff;font-weight:500}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}.big:active{transform:none}}
+</style>
+</head>
+<body>
+<div id="app" class="wrap"></div>
+<input id="picker" type="file" accept="image/*" multiple hidden>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ---------- Konu listeleri ---------- */
+const S = (id, ad, k) => ({ id, ad, konular: k.split("|") });
+const DERSLER = {
+  TYT: [
+    S("tyt-tr","Türkçe","Sözcükte Anlam|Cümlede Anlam|Paragraf|Ses Bilgisi|Yazım Kuralları|Noktalama İşaretleri|Sözcükte Yapı|İsim ve Sıfat|Zamir ve Zarf|Edat, Bağlaç, Ünlem|Fiiller ve Ek Fiil|Fiilimsiler|Cümlenin Ögeleri|Cümle Türleri|Fiilde Çatı|Anlatım Bozuklukları"),
+    S("tyt-mat","Matematik","Temel Kavramlar|Sayı Basamakları|Bölme ve Bölünebilme|EBOB-EKOK|Rasyonel Sayılar|Basit Eşitsizlikler|Mutlak Değer|Üslü Sayılar|Köklü Sayılar|Çarpanlara Ayırma|Oran-Orantı|Denklem Çözme|Sayı ve Kesir Problemleri|Yaş Problemleri|Hareket Problemleri|İşçi ve Havuz Problemleri|Yüzde, Kâr-Zarar|Karışım Problemleri|Grafik Problemleri|Kümeler|Mantık|Fonksiyonlar|Polinomlar|2. Dereceden Denklemler|Permütasyon ve Kombinasyon|Olasılık|Veri ve İstatistik"),
+    S("tyt-geo","Geometri","Doğruda ve Üçgende Açılar|Dik Üçgen|İkizkenar ve Eşkenar Üçgen|Üçgende Alan|Açıortay ve Kenarortay|Üçgende Benzerlik|Açı-Kenar Bağıntıları|Çokgenler|Dörtgenler ve Yamuk|Paralelkenar ve Eşkenar Dörtgen|Dikdörtgen ve Kare|Deltoid|Çember ve Daire|Analitik Geometri|Katı Cisimler"),
+    S("tyt-fiz","Fizik","Fizik Bilimine Giriş|Madde ve Özellikleri|Hareket ve Kuvvet|İş, Güç ve Enerji|Isı ve Sıcaklık|Elektrostatik|Elektrik Akımı ve Devreler|Manyetizma|Basınç|Kaldırma Kuvveti|Dalgalar|Optik"),
+    S("tyt-kim","Kimya","Kimya Bilimi|Atom ve Periyodik Sistem|Kimyasal Türler Arası Etkileşimler|Maddenin Halleri|Doğa ve Kimya|Kimyanın Temel Kanunları|Kimyasal Hesaplamalar|Karışımlar|Asitler, Bazlar ve Tuzlar|Kimya Her Yerde"),
+    S("tyt-biy","Biyoloji","Canlıların Ortak Özellikleri|Canlıların Temel Bileşenleri|Hücre ve Organeller|Madde Geçişleri|Canlıların Sınıflandırılması|Hücre Bölünmeleri|Kalıtım|Ekosistem Ekolojisi|Güncel Çevre Sorunları"),
+    S("tyt-tar","Tarih","Tarih ve Zaman|İnsanlığın İlk Dönemleri|Orta Çağ'da Dünya|İlk ve Orta Çağlarda Türk Dünyası|İslam Medeniyetinin Doğuşu|İlk Türk-İslam Devletleri|Selçuklu Türkiyesi|Beylikten Devlete Osmanlı|Dünya Gücü Osmanlı|Değişen Dünya Dengeleri|Değişim Çağında Avrupa ve Osmanlı|Uluslararası İlişkilerde Denge Stratejisi|Devrimler Çağı|XX. Yüzyıl Başlarında Osmanlı|Milli Mücadele|Atatürkçülük ve Türk İnkılabı"),
+    S("tyt-cog","Coğrafya","Doğa ve İnsan|Dünya'nın Şekli ve Hareketleri|Coğrafi Konum|Harita Bilgisi|Atmosfer ve Sıcaklık|Basınç ve Rüzgârlar|Nem ve Yağış|İklimler|İç ve Dış Kuvvetler|Su, Toprak ve Bitkiler|Nüfus|Göç|Yerleşme|Türkiye'nin Yer Şekilleri|Ekonomik Faaliyetler|Bölgeler|Ulaşım Hatları|Çevre ve Toplum|Doğal Afetler"),
+    S("tyt-fel","Felsefe","Felsefeyi Tanıma|Bilgi Felsefesi|Varlık Felsefesi|Ahlak Felsefesi|Sanat Felsefesi|Din Felsefesi|Siyaset Felsefesi|Bilim Felsefesi"),
+    S("tyt-din","Din Kültürü","Bilgi ve İnanç|Din ve İslam|İslam ve İbadet|Gençlik ve Değerler|Allah-İnsan İlişkisi|Hz. Muhammed|Vahiy ve Akıl|İslam Düşüncesinde Yorumlar")
+  ],
+  AYT: [
+    S("ayt-mat","Matematik","Fonksiyonlar|Polinomlar|2. Dereceden Denklemler|Karmaşık Sayılar|Eşitsizlikler|Parabol|Permütasyon, Kombinasyon, Olasılık|Trigonometri|Logaritma|Diziler|Limit ve Süreklilik|Türev|İntegral"),
+    S("ayt-geo","Geometri","Üçgenler|Çokgenler ve Dörtgenler|Çember ve Daire|Doğrunun Analitiği|Çemberin Analitiği|Dönüşüm Geometrisi|Katı Cisimler"),
+    S("ayt-fiz","Fizik","Vektörler|Bağıl Hareket|Newton'un Hareket Yasaları|Sabit İvmeli Hareket|İki Boyutta Hareket|Enerji ve Hareket|İtme ve Momentum|Tork ve Denge|Kütle Merkezi|Basit Makineler|Elektriksel Kuvvet ve Alan|Elektriksel Potansiyel|Düzgün Elektrik Alan ve Sığa|Manyetizma ve İndüksiyon|Alternatif Akım ve Transformatör|Çembersel Hareket|Basit Harmonik Hareket|Dalga Mekaniği|Atom Fiziği ve Radyoaktivite|Modern Fizik"),
+    S("ayt-kim","Kimya","Modern Atom Teorisi|Gazlar|Sıvı Çözeltiler ve Çözünürlük|Tepkimelerde Enerji|Tepkime Hızları|Kimyasal Denge|Asit-Baz Dengesi|Çözünürlük Dengesi|Kimya ve Elektrik|Karbon Kimyasına Giriş|Organik Bileşikler|Enerji Kaynakları"),
+    S("ayt-biy","Biyoloji","Sinir Sistemi|Endokrin Sistem|Duyu Organları|Destek ve Hareket Sistemi|Sindirim Sistemi|Dolaşım ve Bağışıklık|Solunum Sistemi|Boşaltım Sistemi|Üreme ve Embriyonik Gelişim|Komünite ve Popülasyon Ekolojisi|Genden Proteine|Canlılarda Enerji Dönüşümleri|Bitki Biyolojisi|Canlılar ve Çevre"),
+    S("ayt-ede","Edebiyat","Anlam Bilgisi|Şiir Bilgisi|Edebi Sanatlar|Edebiyat Akımları|İslamiyet Öncesi Türk Edebiyatı|Geçiş Dönemi|Halk Edebiyatı|Divan Edebiyatı|Tanzimat Edebiyatı|Servet-i Fünun ve Fecr-i Ati|Milli Edebiyat|Cumhuriyet Dönemi|Metin Türleri|Dünya Edebiyatı"),
+    S("ayt-tar","Tarih","Tarih Bilimi|İlk Uygarlıklar|İlk Türk Devletleri|İslam Tarihi|Türk-İslam Devletleri|Osmanlı Kuruluş ve Yükselme|Osmanlı Duraklama ve Gerileme|Osmanlı Dağılma Dönemi|XX. Yüzyıl Başlarında Osmanlı|Milli Mücadele|Atatürk İlke ve İnkılapları|Atatürk Dönemi Dış Politika|II. Dünya Savaşı|Soğuk Savaş|Yumuşama Dönemi ve Sonrası|Küreselleşen Dünya"),
+    S("ayt-cog","Coğrafya","Ekosistem|Nüfus Politikaları|Şehirler|Ekonomik Faaliyetler ve Kaynaklar|Türkiye Ekonomisi|Tarım ve Hayvancılık|Madencilik ve Enerji|Sanayi|Ticaret ve Turizm|Kültür Bölgeleri|Küresel ve Bölgesel Örgütler|Çevre ve Toplum|Doğal Afetler"),
+    S("ayt-fel","Felsefe Grubu","Mantık|Psikoloji|Sosyoloji|MÖ 6. yy - MS 2. yy Felsefesi|MS 2. yy - 15. yy Felsefesi|15. - 17. yy Felsefesi|18. - 19. yy Felsefesi|20. yy Felsefesi"),
+    S("ayt-din","Din Kültürü","Dünya ve Ahiret|Kur'an'a Göre Hz. Muhammed|Kur'an'da Bazı Kavramlar|İnançla İlgili Meseleler|Yahudilik ve Hristiyanlık|İslam ve Bilim|Anadolu'da İslam|İslam Düşüncesinde Tasavvufi Yorumlar|Güncel Dini Meseleler|Hint ve Çin Dinleri")
+  ]
+};
+const DERS = {};
+for (const sinav of ["TYT","AYT"]) for (const d of DERSLER[sinav]) DERS[d.id] = Object.assign({ sinav }, d);
+
+/* ---------- Depolama ---------- */
+let db = null, fotolar = [], ekKonular = {}, depolamaHata = false;
+function idbAc(){
+  return new Promise((res, rej) => {
+    const r = indexedDB.open("yanlis-defteri", 1);
+    r.onupgradeneeded = () => {
+      const d = r.result;
+      if (!d.objectStoreNames.contains("fotolar")) d.createObjectStore("fotolar", { keyPath: "id" });
+      if (!d.objectStoreNames.contains("ayar")) d.createObjectStore("ayar", { keyPath: "k" });
+    };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+function islem(store, mode, fn){
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, mode);
+    const s = tx.objectStore(store);
+    const out = fn(s);
+    tx.oncomplete = () => res(out && out.result !== undefined ? out.result : undefined);
+    tx.onerror = () => rej(tx.error);
+    tx.onabort = () => rej(tx.error);
+  });
+}
+async function yukle(){
+  try {
+    db = await idbAc();
+    fotolar = (await islem("fotolar","readonly", s => s.getAll())) || [];
+    const a = await islem("ayar","readonly", s => s.get("ekKonular"));
+    ekKonular = (a && a.v) || {};
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
+  } catch (e) { depolamaHata = true; }
+}
+async function ekKonuKaydet(){
+  if (!db) return;
+  try { await islem("ayar","readwrite", s => s.put({ k:"ekKonular", v: ekKonular })); } catch(e){}
+}
+
+/* ---------- Yardımcılar ---------- */
+const $app = document.getElementById("app");
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const urlCache = new Map();
+const fotoUrl = f => { if (!urlCache.has(f.id)) urlCache.set(f.id, URL.createObjectURL(f.blob)); return urlCache.get(f.id); };
+const konulari = sid => DERS[sid].konular.concat(ekKonular[sid] || []);
+const say = list => ({ y: list.filter(f => f.tip === "y").length, b: list.filter(f => f.tip === "b").length });
+const sayac = c => {
+  let h = "";
+  if (c.y) h += `<span class="c y" aria-label="${c.y} yanlış">${c.y} yanlış</span>`;
+  if (c.b) h += `<span class="c b" aria-label="${c.b} boş">${c.b} boş</span>`;
+  return `<span class="counts">${h}</span>`;
+};
+const chev = `<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>`;
+const geriIkon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>`;
+const kameraIkon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>`;
+const pdfIkon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4"/><path d="M12 11v6M9 14l3 3 3-3"/></svg>`;
+const HAFTA = 7*24*60*60*1000;
+function toast(t){ const el = document.getElementById("toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toast._t); toast._t = setTimeout(()=>el.classList.remove("on"), 1800); }
+let sinav = "TYT";
+try { sinav = localStorage.getItem("sinav") || "TYT"; } catch(e){}
+
+/* ---------- Yönlendirme ---------- */
+function rota(){ return (location.hash.slice(1) || "/").split("/").filter(Boolean).map(decodeURIComponent); }
+function git(...p){ const h = "#/" + p.map(encodeURIComponent).join("/"); history.pushState({ d: ((history.state && history.state.d) || 0) + 1 }, "", h); ciz(); }
+function geri(...ust){
+  if (history.state && history.state.d > 0) history.back();
+  else { history.replaceState({ d: 0 }, "", "#/" + ust.map(encodeURIComponent).join("/")); ciz(); }
+}
+window.addEventListener("popstate", ciz);
+
+/* ---------- Ekranlar ---------- */
+function ciz(){
+  document.querySelectorAll(".viewer,.bar").forEach(n => n.remove());
+  const r = rota();
+  if (r[0] === "d" && DERS[r[1]]) return dersEkrani(r[1]);
+  if (r[0] === "k" && DERS[r[1]] && r[2]) return konuEkrani(r[1], r[2], r[3]);
+  if (r[0] === "f") { const f = fotolar.find(x => x.id === r[1]); if (f) { konuEkrani(f.ders, f.konu); return gorsel(f); } }
+  anaEkran();
+}
+
+function anaEkran(){
+  const toplam = say(fotolar);
+  let h = `<header class="top"><h1>Yanlış Defteri</h1>
+    <div class="sub">${fotolar.length ? `Toplam ${toplam.y} yanlış, ${toplam.b} boş soru` : "Bir ders seç, konuyu bul, sorunun fotoğrafını çek."}</div>
+    <div class="seg" role="group" aria-label="Sınav">
+      <button data-s="TYT" aria-pressed="${sinav==="TYT"}">TYT</button>
+      <button data-s="AYT" aria-pressed="${sinav==="AYT"}">AYT</button>
+    </div></header>`;
+  if (depolamaHata) h += `<div class="emptybox"><b>Fotoğraflar bu tarayıcıda saklanamıyor.</b>Gizli sekmeyi kapatıp normal sekmede aç ya da başka bir tarayıcı dene.</div>`;
+  h += `<div class="list">`;
+  for (const d of DERSLER[sinav]) {
+    const c = say(fotolar.filter(f => f.ders === d.id));
+    h += `<button class="row${c.y+c.b ? "" : " empty"}" data-d="${d.id}"><span class="name">${esc(d.ad)}</span>${sayac(c)}${chev}</button>`;
+  }
+  h += `</div>`;
+  const haftalik = fotolar.filter(f => f.t >= Date.now() - HAFTA);
+  h += `<button class="weekbtn" id="hafta" ${haftalik.length ? "" : "disabled"}>${pdfIkon}<span>Son 1 haftanın sorularını PDF yap<small>${haftalik.length ? `${haftalik.length} soru, TYT ve AYT birlikte` : "Son 7 günde eklenen soru yok"}</small></span></button>`;
+  $app.innerHTML = h;
+  document.getElementById("hafta").onclick = () => {
+    const sira = {}; let n = 0;
+    for (const sv of ["TYT","AYT"]) for (const d of DERSLER[sv]) konulari(d.id).forEach(k => { sira[d.id + "|" + k] = n++; });
+    const l = fotolar.filter(f => f.t >= Date.now() - HAFTA).sort((a,b) => (sira[a.ders+"|"+a.konu] ?? 1e9) - (sira[b.ders+"|"+b.konu] ?? 1e9) || a.t - b.t);
+    const bas = new Date(Date.now() - HAFTA).toLocaleDateString("tr-TR", { day:"numeric", month:"long" });
+    const son = new Date().toLocaleDateString("tr-TR", { day:"numeric", month:"long" });
+    pdfYap(l, "Son 1 haftanın soruları", `${bas} - ${son}`, true, "son-1-hafta");
+  };
+  $app.querySelectorAll("[data-s]").forEach(b => b.onclick = () => { sinav = b.dataset.s; try{localStorage.setItem("sinav", sinav)}catch(e){} anaEkran(); });
+  $app.querySelectorAll("[data-d]").forEach(b => b.onclick = () => git("d", b.dataset.d));
+}
+
+function dersEkrani(sid){
+  const d = DERS[sid];
+  const dersF = fotolar.filter(f => f.ders === sid);
+  const c = say(dersF);
+  let h = `<header class="top"><button class="back" id="geri">${geriIkon}${d.sinav}</button>
+    <h1>${esc(d.ad)}</h1>
+    <div class="sub">${c.y + c.b ? `${c.y} yanlış, ${c.b} boş soru` : "Henüz soru eklenmedi"}</div></header><div class="list">`;
+  konulari(sid).forEach(k => {
+    const kc = say(dersF.filter(f => f.konu === k));
+    h += `<button class="row${kc.y+kc.b ? "" : " empty"}" data-k="${esc(k)}"><span class="name">${esc(k)}</span>${sayac(kc)}${chev}</button>`;
+  });
+  h += `<button class="row add-topic" id="ekle"><span class="plus" aria-hidden="true">+</span><span class="name">Konu ekle</span></button></div>`;
+  $app.innerHTML = h;
+  window.scrollTo(0,0);
+  document.getElementById("geri").onclick = () => geri();
+  $app.querySelectorAll("[data-k]").forEach(b => b.onclick = () => git("k", sid, b.dataset.k));
+  document.getElementById("ekle").onclick = () => konuEkleSor(sid);
+}
+
+let filtre = "hepsi";
+function konuEkrani(sid, konu){
+  const d = DERS[sid];
+  const liste = fotolar.filter(f => f.ders === sid && f.konu === konu).sort((a,b) => b.t - a.t);
+  const c = say(liste);
+  const gorunen = filtre === "hepsi" ? liste : liste.filter(f => f.tip === filtre);
+  const ozel = (ekKonular[sid] || []).includes(konu);
+  let h = `<header class="top"><button class="back" id="geri">${geriIkon}${esc(d.ad)}</button>
+    ${liste.length ? `<button class="pdfbtn" id="pdf">${pdfIkon}PDF</button>` : ""}
+    <h1>${esc(konu)}</h1>
+    <div class="sub">${d.sinav} ${esc(d.ad)}${c.y+c.b ? `, ${c.y} yanlış, ${c.b} boş` : ""}</div></header>`;
+  if (!liste.length) {
+    h += `<div class="emptybox"><b>Bu konuda henüz soru yok</b>Yanlış yaptığın ya da boş bıraktığın sorunun fotoğrafını aşağıdan ekle.</div>`;
+  } else {
+    if (c.y && c.b) h += `<div class="filters">
+      <button data-f="hepsi" aria-pressed="${filtre==="hepsi"}">Hepsi</button>
+      <button data-f="y" aria-pressed="${filtre==="y"}">Yanlış</button>
+      <button data-f="b" aria-pressed="${filtre==="b"}">Boş</button></div>`;
+    h += `<div class="grid">` + gorunen.map(f =>
+      `<button class="th" data-id="${f.id}" aria-label="${f.tip==="y"?"Yanlış":"Boş"} soru"><img src="${fotoUrl(f)}" alt="" loading="lazy"><span class="tag ${f.tip}">${f.tip==="y"?"Yanlış":"Boş"}</span></button>`
+    ).join("") + `</div>`;
+  }
+  if (ozel && !liste.length) h += `<button class="linkbtn" id="konuSil">Bu konuyu listeden kaldır</button>`;
+  $app.innerHTML = h;
+  document.getElementById("geri").onclick = () => geri("d", sid);
+  $app.querySelectorAll("[data-f]").forEach(b => b.onclick = () => { filtre = b.dataset.f; konuEkrani(sid, konu); });
+  $app.querySelectorAll("[data-id]").forEach(b => b.onclick = () => git("f", b.dataset.id));
+  const pb = document.getElementById("pdf");
+  if (pb) pb.onclick = () => {
+    const l = gorunen.slice().sort((a,b) => a.t - b.t);
+    const ne = filtre === "y" ? "yanlış " : filtre === "b" ? "boş " : "";
+    pdfYap(l, `${d.sinav} ${d.ad}: ${konu}`, `${l.length} ${ne}soru`, false, `${d.sinav}-${d.ad}-${konu}`);
+  };
+  const ks = document.getElementById("konuSil");
+  if (ks) ks.onclick = async () => { ekKonular[sid] = (ekKonular[sid]||[]).filter(k => k !== konu); await ekKonuKaydet(); geri("d", sid); };
+
+  const bar = document.createElement("div");
+  bar.className = "bar";
+  bar.innerHTML = `<div class="in"><button class="big y" data-t="y">${kameraIkon}Yanlış ekle</button><button class="big b" data-t="b">${kameraIkon}Boş ekle</button></div>`;
+  document.body.appendChild(bar);
+  bar.querySelectorAll("[data-t]").forEach(b => b.onclick = () => fotoSec(sid, konu, b.dataset.t));
+}
+
+/* ---------- Fotoğraf ekleme ---------- */
+async function kucult(file){
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+    const max = 1600, s = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    const w = Math.round(img.naturalWidth * s), h = Math.round(img.naturalHeight * s);
+    const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+    cv.getContext("2d").drawImage(img, 0, 0, w, h);
+    return await new Promise(r => cv.toBlob(b => r(b || file), "image/jpeg", 0.82));
+  } catch (e) { return file; } finally { URL.revokeObjectURL(url); }
+}
+function fotoSec(sid, konu, tip){
+  if (!db) { toast("Fotoğraflar bu tarayıcıda saklanamıyor"); return; }
+  const p = document.getElementById("picker");
+  p.value = "";
+  p.onchange = async () => {
+    const files = Array.from(p.files || []);
+    if (!files.length) return;
+    const busy = document.createElement("div"); busy.className = "busy"; busy.textContent = "Kaydediliyor…"; document.body.appendChild(busy);
+    let n = 0;
+    try {
+      for (const file of files) {
+        const blob = await kucult(file);
+        const kayit = { id: Date.now().toString(36) + Math.random().toString(36).slice(2,7), ders: sid, konu, tip, blob, t: Date.now() };
+        await islem("fotolar","readwrite", s => s.put(kayit));
+        fotolar.push(kayit); n++;
+      }
+      toast(n > 1 ? `${n} soru eklendi` : (tip === "y" ? "Yanlış soru eklendi" : "Boş soru eklendi"));
+    } catch (e) {
+      toast(n ? `${n} soru eklendi, kalanlar kaydedilemedi` : "Kaydedilemedi: telefonda yer kalmamış olabilir");
+    } finally { busy.remove(); filtre = "hepsi"; konuEkrani(sid, konu); }
+  };
+  p.click();
+}
+
+/* ---------- Fotoğraf görüntüleyici ---------- */
+function gorsel(f){
+  const liste = fotolar.filter(x => x.ders === f.ders && x.konu === f.konu).sort((a,b) => b.t - a.t);
+  const i = liste.findIndex(x => x.id === f.id);
+  const tarih = new Date(f.t).toLocaleDateString("tr-TR", { day:"numeric", month:"long" });
+  const v = document.createElement("div");
+  v.className = "viewer"; v.setAttribute("role","dialog"); v.setAttribute("aria-label","Soru fotoğrafı");
+  v.innerHTML = `
+    <div class="vtop">
+      <button class="vbtn" id="vk" aria-label="Kapat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <button class="vtag ${f.tip}" id="vt" aria-label="İşareti değiştir">${f.tip==="y"?"Yanlış":"Boş"}</button>
+      <button class="vbtn" id="vs">Sil</button>
+    </div>
+    <div class="vimg" id="vi"><img src="${fotoUrl(f)}" alt="Soru"></div>
+    <div class="vbot">
+      <button class="vbtn" id="vp" aria-label="Önceki" ${i<=0?"disabled style='opacity:.3'":""}>${geriIkon}</button>
+      <div class="vmeta">${i+1} / ${liste.length}, ${tarih}</div>
+      <button class="vbtn" id="vn" aria-label="Sonraki" ${i>=liste.length-1?"disabled style='opacity:.3'":""}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>`;
+  document.body.appendChild(v);
+  const kapat = () => geri("k", f.ders, f.konu);
+  const yan = j => { if (liste[j]) { history.replaceState(history.state, "", "#/f/" + liste[j].id); ciz(); } };
+  v.querySelector("#vk").onclick = kapat;
+  v.querySelector("#vp").onclick = () => yan(i-1);
+  v.querySelector("#vn").onclick = () => yan(i+1);
+  v.querySelector("#vt").onclick = async () => {
+    f.tip = f.tip === "y" ? "b" : "y";
+    try { await islem("fotolar","readwrite", s => s.put(f)); } catch(e){}
+    ciz(); toast(f.tip === "y" ? "Yanlış olarak işaretlendi" : "Boş olarak işaretlendi");
+  };
+  v.querySelector("#vs").onclick = async () => {
+    if (!confirm("Bu soru fotoğrafı silinsin mi?")) return;
+    try { await islem("fotolar","readwrite", s => s.delete(f.id)); } catch(e){ toast("Silinemedi"); return; }
+    fotolar = fotolar.filter(x => x.id !== f.id);
+    if (urlCache.has(f.id)) { URL.revokeObjectURL(urlCache.get(f.id)); urlCache.delete(f.id); }
+    toast("Silindi");
+    const kalan = liste.filter(x => x.id !== f.id);
+    if (kalan.length) { history.replaceState(history.state, "", "#/f/" + kalan[Math.min(i, kalan.length-1)].id); ciz(); }
+    else kapat();
+  };
+  // kaydırarak geçiş
+  let sx = null, sy = 0;
+  const vi = v.querySelector("#vi");
+  vi.addEventListener("touchstart", e => { if (e.touches.length === 1) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; } else sx = null; }, { passive:true });
+  vi.addEventListener("touchend", e => {
+    if (sx === null || (window.visualViewport && window.visualViewport.scale > 1.05)) return;
+    const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) yan(dx < 0 ? i+1 : i-1);
+    sx = null;
+  });
+}
+
+/* ---------- PDF ---------- */
+const indirP = (window.claude && typeof window.claude.use === "function") ? window.claude.use("downloads").catch(() => null) : Promise.resolve(null);
+function resimYukle(src){ return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
+function sigdir(ctx, t, maxW){ if (ctx.measureText(t).width <= maxW) return t; while (t.length > 1 && ctx.measureText(t + "…").width > maxW) t = t.slice(0, -1); return t + "…"; }
+function dosyaAdi(t){ return t.toLocaleLowerCase("tr").replace(/ç/g,"c").replace(/ğ/g,"g").replace(/ı/g,"i").replace(/ö/g,"o").replace(/ş/g,"s").replace(/ü/g,"u").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"") || "sorular"; }
+
+async function pdfYap(liste, baslik, altBaslik, konuGoster, ad){
+  if (!liste.length) { toast("PDF yapılacak soru yok"); return; }
+  if (!window.jspdf) { toast("PDF aracı yüklenemedi, internet bağlantısını kontrol et"); return; }
+  const busy = document.createElement("div"); busy.className = "busy"; busy.textContent = "PDF hazırlanıyor…"; document.body.appendChild(busy);
+  try {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const W = 1240, H = 1754, M = 90, FONT = '"Rubik", system-ui, sans-serif';
+    const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", compress: true });
+    let cv = null, ctx = null, y = 0, sayfa = 0;
+    const bitir = () => {
+      ctx.fillStyle = "#8A94A6"; ctx.font = `400 22px ${FONT}`; ctx.textAlign = "right";
+      ctx.fillText(String(sayfa), W - M, H - 50); ctx.textAlign = "left";
+      if (sayfa > 1) pdf.addPage();
+      pdf.addImage(cv.toDataURL("image/jpeg", 0.85), "JPEG", 0, 0, 210, 297);
+    };
+    const yeniSayfa = () => {
+      if (cv) bitir();
+      cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+      ctx = cv.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
+      sayfa++; y = M;
+    };
+    yeniSayfa();
+    ctx.fillStyle = "#18233D"; ctx.font = `800 46px ${FONT}`;
+    ctx.fillText(sigdir(ctx, baslik, W - 2*M), M, y + 40);
+    ctx.fillStyle = "#66728C"; ctx.font = `400 26px ${FONT}`;
+    ctx.fillText(sigdir(ctx, altBaslik, W - 2*M), M, y + 84);
+    y += 120;
+    ctx.fillStyle = "#D5DCE8"; ctx.fillRect(M, y, W - 2*M, 2); y += 40;
+
+    const icW = W - 2*M, resimMaxW = Math.round(icW * 0.68), resimMaxH = H - 2*M - 140, etiketH = 44;
+    for (let i = 0; i < liste.length; i++) {
+      const f = liste[i];
+      let img; try { img = await resimYukle(fotoUrl(f)); } catch(e) { continue; }
+      const s = Math.min(resimMaxW / img.naturalWidth, resimMaxH / img.naturalHeight, 2);
+      const w = Math.round(img.naturalWidth * s), h = Math.round(img.naturalHeight * s);
+      if (y + etiketH + h > H - M - 40) yeniSayfa();
+      ctx.font = `700 26px ${FONT}`; ctx.fillStyle = "#18233D";
+      const no = `${i+1}.`; ctx.fillText(no, M, y + 28);
+      let x = M + ctx.measureText(no).width + 12;
+      ctx.fillStyle = f.tip === "y" ? "#D7263D" : "#7C8799";
+      const tip = f.tip === "y" ? "Yanlış" : "Boş"; ctx.fillText(tip, x, y + 28);
+      x += ctx.measureText(tip).width + 16;
+      ctx.font = `400 24px ${FONT}`; ctx.fillStyle = "#66728C";
+      const d = DERS[f.ders];
+      const bilgi = (konuGoster ? `${d.sinav} ${d.ad}, ${f.konu}, ` : "") + new Date(f.t).toLocaleDateString("tr-TR", { day:"numeric", month:"long" });
+      ctx.fillText(sigdir(ctx, bilgi, W - M - x), x, y + 28);
+      y += etiketH;
+      ctx.drawImage(img, M, y, w, h);
+      ctx.strokeStyle = "#D5DCE8"; ctx.lineWidth = 2; ctx.strokeRect(M, y, w, h);
+      y += h + 50;
+    }
+    bitir();
+    const blob = pdf.output("blob");
+    await pdfVer(blob, dosyaAdi(ad) + ".pdf");
+  } catch (e) {
+    toast("PDF oluşturulamadı");
+  } finally { busy.remove(); }
+}
+
+async function pdfVer(blob, filename){
+  const indir = await indirP;
+  if (indir) {
+    try { await indir.save({ filename, data: blob }); toast("PDF kaydedildi"); }
+    catch (e) { if (e && e.code !== "declined") toast("PDF kaydedilemedi"); }
+    return;
+  }
+  const file = new File([blob], filename, { type: "application/pdf" });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: filename }); return; }
+    catch (e) { if (e && e.name === "AbortError") return; }
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+}
+
+/* ---------- Konu ekleme ---------- */
+function konuEkleSor(sid){
+  const bg = document.createElement("div");
+  bg.className = "sheet-bg";
+  bg.innerHTML = `<div class="sheet" role="dialog" aria-label="Konu ekle"><h2>${esc(DERS[sid].ad)} dersine konu ekle</h2>
+    <input id="kad" maxlength="60" placeholder="Konu adı" autocomplete="off">
+    <div class="acts"><button class="no" id="kno">Vazgeç</button><button class="ok" id="kok">Ekle</button></div></div>`;
+  document.body.appendChild(bg);
+  const inp = bg.querySelector("#kad"); setTimeout(() => inp.focus(), 50);
+  const kapat = () => bg.remove();
+  bg.onclick = e => { if (e.target === bg) kapat(); };
+  bg.querySelector("#kno").onclick = kapat;
+  const ekle = async () => {
+    const ad = inp.value.trim();
+    if (!ad) { inp.focus(); return; }
+    if (konulari(sid).some(k => k.toLocaleLowerCase("tr") === ad.toLocaleLowerCase("tr"))) { toast("Bu konu zaten listede"); return; }
+    ekKonular[sid] = (ekKonular[sid] || []).concat(ad);
+    await ekKonuKaydet(); kapat(); dersEkrani(sid); toast("Konu eklendi");
+  };
+  bg.querySelector("#kok").onclick = ekle;
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") ekle(); });
+}
+
+yukle().then(() => { if (!history.state) history.replaceState({ d: 0 }, "", location.hash || "#/"); ciz(); });
+})();
+</script>
+</body>
+</html>
